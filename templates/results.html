@@ -1,0 +1,400 @@
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100 p-4 shadow-sm border-0">
+            <h3 class="text-secondary h5 mb-3">General Identifiers</h3>
+            <table class="table table-sm table-borderless mb-0">
+                <tbody>
+                    <tr>
+                        <th class="w-50 text-muted">Name searched:</th>
+                        <td><strong class="text-dark">{{ mol.name }}</strong></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Raw formula:</th>
+                        <td><span class="badge bg-dark fs-6">{{ mol.formula if mol.formula else '-' }}</span></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">IUPAC name:</th>
+                        <td><small class="fw-semibold">{{ mol.iupac_name if mol.iupac_name else '-' }}</small></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">PubChem CID:</th>
+                        <td>
+                            <span class="badge bg-success fs-6" id="pubchem-cid-value">{{ mol.id_pubchem if mol.id_pubchem else '-' }}</span>
+                            {% if mol.id_pubchem %}
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-1 ms-1" style="font-size: 0.8rem;" 
+                                    onclick="navigator.clipboard.writeText('{{ mol.id_pubchem }}')" 
+                                    title="Copy CID">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">CAS:</th>
+                        <td>
+                            <span class="badge bg-success fs-6" id="CAS-value">{{ mol.CAS if mol.CAS else '-' }}</span>
+                            {% if mol.CAS %}
+                            <button class="btn btn-sm btn-outline-secondary py-0 px-1 ms-1" style="font-size: 0.8rem;" 
+                                    onclick="navigator.clipboard.writeText('{{ mol.CAS }}')" 
+                                    title="Copy CAS">
+                                <i class="fa-regular fa-copy"></i> Copy
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if mol.CAS %}
+                    <tr>
+                        <th class="text-muted">The Good Scents Co.:</th>
+                        <td>
+                            <a href="https://www.google.com/search?q={{ mol.CAS }}+site:thegoodscentscompany.com"
+                               target="_blank" 
+                               rel="noopener noreferrer"
+                               class="btn btn-sm btn-outline-primary py-0 px-2" 
+                               style="font-size: 0.8rem;"
+                               title="Search for odor and flavor profile on TGSC">
+                                 <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Odor and Flavor Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card h-100 p-4 shadow-sm border-0 
+            {% if mol.security and mol.security.signal_word %}
+                {% if 'Danger' in mol.security.signal_word[0] %}border-start border-danger border-4
+                {% elif 'Warning' in mol.security.signal_word[0] %}border-start border-warning border-4{% endif %}
+            {% endif %}">
+        
+            <h3 class="text-secondary h5 mb-3">GHS Security (PubChem)</h3>
+
+            {% if mol.security and (mol.security.signal_word or mol.security.H_codes or mol.security.P_codes) %}
+                <div>
+                    <div class="d-flex align-items-center gap-3 mb-3 p-2 rounded bg-light border">
+                        <div style="width: 55px; height: 55px;" class="d-flex align-items-center justify-content-center bg-white rounded border">
+                            {% if mol.security.signal_word and 'Danger' in mol.security.signal_word[0] %}
+                                <img src="/static/img/ghs/sgh07.png" alt="Danger" class="img-fluid p-1" style="object-fit: contain;" title="High Hazard">
+                            {% elif mol.security.signal_word and 'Warning' in mol.security.signal_word[0] %}
+                                <img src="/static/img/ghs/sgh07.png" alt="Warning" class="img-fluid p-1" style="object-fit: contain;" title="Moderate Hazard">
+                            {% else %}
+                                <i class="fa-solid fa-circle-check text-success fs-2" title="Low hazard"></i>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <strong class="text-muted small d-block">Security keyword:</strong>
+                            {% for word in mol.security.signal_word %}
+                                <span class="badge {% if 'Danger' in word %}bg-danger{% else %}bg-warning text-dark{% endif %} fs-6">{{ word }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                
+                    <div class="mb-3">
+                        <strong class="text-muted small d-block mb-1">Hazard statements (H-codes):</strong>
+                        <div class="d-flex flex-wrap gap-1">
+                            {% for h_code, h_desc in mol.security.H_codes.items() %}
+                                <span class="badge bg-warning text-dark d-inline-flex align-items-center p-2 border border-dark border-opacity-10" 
+                                    data-bs-toggle="tooltip" data-bs-placement="top" title="{{ h_desc }}"
+                                    style="font-size: 0.85rem; font-weight: 600;">
+                                    {% if h_code in ['H220', 'H221', 'H222', 'H223', 'H224', 'H225', 'H226', 'H228'] %}
+                                        <img src="/static/img/ghs/sgh02.png" alt="SGH02" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% elif h_code in ['H270', 'H271', 'H272'] %}
+                                        <img src="/static/img/ghs/sgh03.png" alt="SGH03" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% elif h_code in ['H280', 'H281'] %}
+                                        <img src="/static/img/ghs/sgh04.png" alt="SGH04" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% elif h_code in ['H290', 'H314', 'H318'] %}
+                                        <img src="/static/img/ghs/sgh05.png" alt="SGH05" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% elif h_code in ['H300', 'H310', 'H330', 'H301', 'H311', 'H331'] %}
+                                        <img src="/static/img/ghs/sgh06.png" alt="SGH06" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% elif h_code in ['H304', 'H340', 'H341', 'H350', 'H351', 'H360', 'H361', 'H370', 'H371', 'H372', 'H373'] %}
+                                        <img src="/static/img/ghs/sgh08.png" alt="SGH08" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% elif h_code in ['H400', 'H410', 'H411', 'H412'] %}
+                                        <img src="/static/img/ghs/sgh09.png" alt="SGH09" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% else %}
+                                        <img src="/static/img/ghs/sgh07.png" alt="SGH07" class="me-1" style="height: 18px; width: 18px; object-fit: contain;">
+                                    {% endif %}
+                                    {{ h_code }}
+                                </span>
+                            {% else %}
+                                <small class="text-muted">No specific hazard statements.</small>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div>
+                        <strong class="text-muted small">Precautionary statements (P-codes):</strong>
+                        <div class="d-flex flex-wrap bg-light p-2 rounded border mt-1" style="max-height: 120px; overflow-y: auto;">
+                            {% for p_code in mol.security.P_codes %}
+                                <span class="badge bg-secondary m-1">{{ p_code }}</span>
+                            {% else %}
+                                <small class="text-muted">No specific precautionary statements.</small>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-success d-flex align-items-center">
+                    <i class="fa-solid fa-check-circle me-2"></i>
+                    <span>No major hazard reported.</span>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card p-4 shadow-sm border-0 mb-4">
+    <h3 class="text-secondary h5 mb-3">Comparison of Properties According to the Databases</h3>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover align-middle text-center">
+            <thead class="table-primary text-dark">
+                <tr>
+                    <th class="text-start">Property</th>
+                    <th>
+                        <a href="https://pubchem.ncbi.nlm.nih.gov/compound/{{ mol.id_pubchem }}" target="_blank" class="text-dark text-decoration-none border-bottom border-dark border-opacity-25 pb-1">
+                            PubChem <i class="fa-solid fa-up-right-from-square" style="font-size: 0.7em;"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="https://webbook.nist.gov/cgi/cbook.cgi?ID={{ mol.CAS }}" target="_blank" class="text-dark text-decoration-none border-bottom border-dark border-opacity-25 pb-1">
+                            NIST <i class="fa-solid fa-up-right-from-square" style="font-size: 0.7em;"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="https://bioinformatics.charite.de/mvoc/index.php?site=mvocsearch" 
+                           target="_blank" 
+                           class="text-dark text-decoration-none border-bottom border-dark border-opacity-25 pb-1"
+                           title="Open mVOC Search Interface">
+                             mVOC <i class="fa-solid fa-up-right-from-square" style="font-size: 0.7em;"></i>
+                        </a>
+                    </th>
+                    <th>Chemical (Thermo)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th class="text-start text-muted">Molar Mass</th>
+                    <td>{{ "{:.3f}".format(mol.molar_mass.pubchem) ~ ' g/mol' if mol.molar_mass.pubchem else '-' }}</td>
+                    <td>{{ "{:.3f}".format(mol.molar_mass.nist) ~ ' g/mol' if mol.molar_mass.nist else '-' }}</td>
+                    <td>{{ "{:.3f}".format(mol.molar_mass.mvoc) ~ ' g/mol' if mol.molar_mass.mvoc else '-' }}</td>
+                    <td>{{ "{:.3f}".format(mol.molar_mass.chemical) ~ ' g/mol' if mol.molar_mass.chemical else '-' }}</td>
+                </tr>
+                <tr>
+                    <th class="text-start text-muted">LogP</th>
+                    <td>{{ "{:.2f}".format(mol.logp.pubchem) if mol.logp.pubchem else '-' }}</td>
+                    <td>-</td>
+                    <td>{{ "{:.2f}".format(mol.logp.mvoc) if mol.logp.mvoc else '-' }}</td>
+                    <td>{{ "{:.2f}".format(mol.logp.chemical) if mol.logp.chemical else '-' }}</td>
+                </tr>
+                <tr>
+                    <th class="text-start text-muted">Boiling Point</th>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.boilingtemp.pubchem) ~ ' °C' if mol.boilingtemp.pubchem else '-' }}</td>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.boilingtemp.nist) ~ ' °C' if mol.boilingtemp.nist else '-' }}</td>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.boilingtemp.mvoc) ~ ' °C' if mol.boilingtemp.mvoc else '-' }}</td>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.boilingtemp.chemical) ~ ' °C' if mol.boilingtemp.chemical else '-' }}</td>
+                </tr>
+				<tr>
+                    <th class="text-start text-muted">Melting Point</th>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.meltingtemp.pubchem) ~ ' °C' if mol.meltingtemp.pubchem else '-' }}</td>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.meltingtemp.nist) ~ ' °C' if mol.meltingtemp.nist else '-' }}</td>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.meltingtemp.mvoc) ~ ' °C' if mol.meltingtemp.mvoc else '-' }}</td>
+                    <td class="fs-6">{{ "{:.2f}".format(mol.meltingtemp.chemical) ~ ' °C' if mol.meltingtemp.chemical else '-' }}</td>
+                </tr>
+                <tr>
+                    <th class="text-start text-muted">Vapor Pressure</th>
+                    <td>
+                        {% if mol.vaporpressure.pubchem %}
+                            {% set vp_str = "{:.2e}".format(mol.vaporpressure.pubchem) %}{% set parts = vp_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span class="fs-6">{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup> Pa</span>
+                            {% if mol.vaporpressure.pubchem_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporpressure.pubchem_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if mol.vaporpressure.nist %}
+                            {% set vp_str = "{:.2e}".format(mol.vaporpressure.nist) %}{% set parts = vp_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span class="fs-6">{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup> Pa</span>
+                            {% if mol.vaporpressure.nist_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporpressure.nist_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if mol.vaporpressure.mvoc %}
+                            {% set vp_str = "{:.2e}".format(mol.vaporpressure.mvoc) %}{% set parts = vp_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span class="fs-6">{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup> Pa</span>
+                            {% if mol.vaporpressure.mvoc_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporpressure.mvoc_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if mol.vaporpressure.chemical %}
+                            {% set vp_str = "{:.2e}".format(mol.vaporpressure.chemical) %}{% set parts = vp_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span class="fs-6">{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup> Pa</span>
+                            {% if mol.vaporpressure.chemical_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporpressure.chemical_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th class="text-start text-muted">Dipole Moment</th>
+                    <td>{{ "{:.2f}".format(mol.dipolemoment.pubchem) ~ ' D' if mol.dipolemoment.pubchem else '-' }}</td>
+                    <td>{{ "{:.2f}".format(mol.dipolemoment.nist) ~ ' D' if mol.dipolemoment.nist else '-' }}</td>
+                    <td>-</td>
+                    <td>{{ "{:.2f}".format(mol.dipolemoment.chemical) ~ ' D' if mol.dipolemoment.chemical else '-' }}</td>
+                </tr>
+                <tr>
+                    <th class="text-start text-muted">Vaporization Enthalpy</th>    
+                    <td>
+                        {% if mol.vaporizationenthalpy.pubchem %}
+                            <span class="fs-6">{{ "{:.2f}".format(mol.vaporizationenthalpy.pubchem) }} kJ/mol</span>
+                            {% if mol.vaporizationenthalpy.pubchem_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporizationenthalpy.pubchem_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if mol.vaporizationenthalpy.nist %}
+                            <span class="fs-6">{{ "{:.2f}".format(mol.vaporizationenthalpy.nist) }} kJ/mol</span>
+                            {% if mol.vaporizationenthalpy.nist_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporizationenthalpy.nist_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>-</td>
+                    <td>
+                        {% if mol.vaporizationenthalpy.chemical %}
+                            <span class="fs-6">{{ "{:.2f}".format(mol.vaporizationenthalpy.chemical) }} kJ/mol</span>
+                            {% if mol.vaporizationenthalpy.chemical_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.vaporizationenthalpy.chemical_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th class="text-start text-muted">Fusion Enthalpy</th>
+                    <td>
+                        {% if mol.fusionenthalpy.pubchem %}
+                            <span class="fs-6">{{ "{:.2f}".format(mol.fusionenthalpy.pubchem) }} kJ/mol</span>
+                            {% if mol.fusionenthalpy.pubchem_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.fusionenthalpy.pubchem_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>
+                        {% if mol.fusionenthalpy.nist %}
+                            <span class="fs-6">{{ "{:.2f}".format(mol.fusionenthalpy.nist) }} kJ/mol</span>
+                            {% if mol.fusionenthalpy.nist_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.fusionenthalpy.nist_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                    <td>-</td>
+                    <td>
+                        {% if mol.fusionenthalpy.chemical %}
+                            <span class="fs-6">{{ "{:.2f}".format(mol.fusionenthalpy.chemical) }} kJ/mol</span>
+                            {% if mol.fusionenthalpy.chemical_temperature %}
+                                <br><span class="badge bg-light text-muted border font-monospace mt-1">at {{ "{:.2f}".format(mol.fusionenthalpy.chemical_temperature) }} K</span>
+                            {% endif %}
+                        {% else %}-{% endif %}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card h-100 p-4 shadow-sm border-0">
+            <h3 class="text-secondary h5 mb-3">Henry Constant (/atm)</h3>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {% if mol.henryconstant.sander %}
+                            {% set CAS_id = mol.CAS if mol.CAS else mol.CAS_number %}
+                            <a href="https://www.henrys-law.org/henry/casrn/{{ CAS_id }}" 
+                               target="_blank" 
+                               rel="noopener noreferrer" 
+                               class="text-decoration-none text-dark pb-1"
+                               style="border-bottom: 1px solid rgba(0, 0, 0, 0.25);">
+                                <strong>Sander</strong> <i class="fa-solid fa-up-right-from-square" style="font-size: 0.7em;"></i>
+                            </a>
+                        {% else %}
+                            <strong>Sander :</strong>
+                        {% endif %}
+                        <br>
+                        <small class="text-muted">ref: {{ mol.henryconstant.sander_ref if mol.henryconstant.sander_ref else 'N/A' }}</small>
+                    </span>
+                    <span class="badge bg-primary fs-6 py-2 px-3 text-end">
+                        {% if mol.henryconstant.sander %}
+                            {% set hc_str = "{:.2e}".format(mol.henryconstant.sander) %}{% set parts = hc_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span>{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup></span>
+                            {% if mol.henryconstant.sander_temperature %}<br><small class="text-white-50 small font-monospace">at {{ "{:.2f}".format(mol.henryconstant.sander_temperature) }} K</small>{% endif %}
+                        {% else %}-{% endif %}
+                    </span>
+                </li>
+
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><strong>mVOC :</strong></span>
+                    <span class="badge bg-secondary fs-6 py-2 px-3 text-end">
+                        {% if mol.henryconstant.mvoc %}
+                            {% set hc_str = "{:.2e}".format(mol.henryconstant.mvoc) %}{% set parts = hc_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span>{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup></span>
+                            {% if mol.henryconstant.mvoc_temperature %}<br><small class="text-white-50 small font-monospace">at {{ "{:.2f}".format(mol.henryconstant.mvoc_temperature) }} K</small>{% endif %}
+                        {% else %}-{% endif %}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><strong>NIST :</strong></span>
+                    <span class="badge bg-info text-dark fs-6 py-2 px-3 text-end">
+                        {% if mol.henryconstant.nist %}
+                            {% set hc_str = "{:.2e}".format(mol.henryconstant.nist) %}{% set parts = hc_str.split('e') %}{% set exponent = parts[1] | replace('+', '') | int %}
+                            <span>{{ parts[0] }} &times; 10<sup>{{ exponent }}</sup></span>
+                            {% if mol.henryconstant.nist_temperature %}<br><small class="text-muted small font-monospace">at {{ "{:.2f}".format(mol.henryconstant.nist_temperature) }} K</small>{% endif %}
+                        {% else %}-{% endif %}
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100 p-4 shadow-sm border-0">
+            <h3 class="text-secondary h5 mb-3">Spectrum Characteristics</h3>
+            {% if mol.spectre and mol.spectre.hitran %}
+            <table class="table table-sm table-borderless mb-0">
+                <tbody>
+                    <tr>
+                        <th class="w-50 text-muted">Peak Frequency:</th>
+                        <td>{{ "{:.2f}".format(mol.spectre.hitran) }} GHz</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Doppler Width:</th>
+                        <td>{{ "{:.4f}".format(mol.spectre.doppler_width) }} MHz</td>
+                    </tr>
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-warning mb-0"><i class="fa-solid fa-triangle-exclamation"></i> No spectral information available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if graph and graph|string|trim != "" and mol.spectre and mol.spectre.nu_GHz is not none and mol.spectre.nu_GHz|length > 0 %}
+<div class="card p-4 shadow-sm border-0 text-center">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-secondary h5 mb-0 text-start">Molecular Absorption Spectrum Graph</h3>
+        <button class="btn btn-sm btn-outline-success shadow-sm no-print" onclick="downloadSpectrumCSV()">
+            <i class="fa-solid fa-file-csv"></i> Download CSV
+        </button>
+    </div>
+    <img id="spectre-img" src="{{ graph }}" alt="Absorption Spectrum" class="img-fluid img-thumbnail shadow-sm mx-auto d-block">
+</div>
+{% endif %}

@@ -1,0 +1,13 @@
+flask
+matplotlib
+numpy
+thermo
+radis
+scipy
+beautifulsoup4
+requests
+pubchempy
+pint
+playwright
+astroquery
+nest_asyncio

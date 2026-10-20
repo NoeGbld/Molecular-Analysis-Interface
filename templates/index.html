@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Interface</title>
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.08) !important;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        #progress-logs::-webkit-scrollbar,
+        #p-codes-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #progress-logs::-webkit-scrollbar-thumb,
+        #p-codes-box::-webkit-scrollbar-thumb {
+            background-color: #ced4da;
+            border-radius: 10px;
+        }
+
+        #progress-logs::-webkit-scrollbar-thumb:hover,
+        #p-codes-box::-webkit-scrollbar-thumb:hover {
+            background-color: #adb5bd;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 10px;
+            background-color: rgba(13, 110, 253, 0.05);
+            border-radius: 6px;
+            font-weight: 500;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.2s;
+        }
+
+        summary:hover {
+            background-color: rgba(13, 110, 253, 0.1);
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        @media print {
+            div.text-start, .no-print, form, button, .input-group {
+                display: none !important;
+            }
+            body {
+                background-color: #ffffff !important;
+                padding: 0;
+                margin: 0;
+                font-size: 13px !important;
+            }
+            .card {
+                box-shadow: none !important;
+                border: 1px solid #dee2e6 !important;
+                page-break-inside: avoid;
+            }
+            #results-zone .table-responsive table,
+            #results-zone table:has(th:nth-child(4)) {
+                table-layout: fixed !important;
+                width: 100% !important;
+                font-size: 10.5px !important;
+                word-wrap: break-word !important;
+            }
+            #results-zone table:has(th:nth-child(4)) th,
+            #results-zone table:has(th:nth-child(4)) td {
+                padding: 4px 2px !important;
+            }
+            #results-zone table:not(:has(th:nth-child(4))) {
+                table-layout: auto !important;
+                width: 100% !important;
+                font-size: 13px !important;
+            }
+            #results-zone table:not(:has(th:nth-child(4))) td {
+                padding: 8px !important;
+            }
+            .container {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+        }
+
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #0b0f19; 
+            --bs-body-color: #f8fafc;
+            --bs-card-bg: #111827; 
+            --bs-card-border-color: #1f2937;
+            --bs-table-color: #f8fafc;
+            --bs-table-striped-bg: #1f2937;
+            --bs-table-bg: #111827;
+            --bs-border-color: #1f2937;
+            --bs-tertiary-bg: #1f2937; 
+        }
+
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .card {
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        [data-bs-theme="dark"] #results-zone {
+            color: #f8fafc !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone h3,
+        [data-bs-theme="dark"] #results-zone h4,
+        [data-bs-theme="dark"] #results-zone h5,
+        [data-bs-theme="dark"] #results-zone .h5,
+        [data-bs-theme="dark"] #results-zone .text-secondary,
+        [data-bs-theme="dark"] #results-zone card-header {
+            color: #ffffff !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone td, 
+        [data-bs-theme="dark"] #results-zone div,
+        [data-bs-theme="dark"] #results-zone .text-muted,
+        [data-bs-theme="dark"] #results-zone span:not(.badge),
+        [data-bs-theme="dark"] #results-zone table tr td:nth-child(2),
+        [data-bs-theme="dark"] #results-zone table td strong,
+        [data-bs-theme="dark"] #results-zone .table td {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+
+        [data-bs-theme="dark"] .table thead th,
+        [data-bs-theme="dark"] .table thead th a,
+        [data-bs-theme="dark"] #results-zone th,
+        [data-bs-theme="dark"] #results-zone th a {
+            color: #ffffff !important;
+            text-decoration: none !important;
+            font-weight: bold !important;
+        }
+
+        [data-bs-theme="dark"] .table thead th {
+            background-color: #1f2937 !important;
+            border-bottom: 2px solid #2d3748 !important;
+        }
+
+        [data-bs-theme="dark"] .table .badge, 
+        [data-bs-theme="dark"] .badge.bg-light {
+            background-color: #1f2937 !important;
+            color: #9ca3af !important;
+            border: 1px solid #2d3748 !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone .badge-secure-henry {
+            color: #ffffff !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone .bg-white,
+        [data-bs-theme="dark"] #results-zone .bg-light,
+        [data-bs-theme="dark"] #results-zone .card .p-3,
+        [data-bs-theme="dark"] #results-zone .rounded.p-3,
+        [data-bs-theme="dark"] #results-zone div[style*="background"],
+        [data-bs-theme="dark"] #results-zone div[style*="background-color"],
+        [data-bs-theme="dark"] #results-zone div[style*="#fff"],
+        [data-bs-theme="dark"] #results-zone div[style*="255"] {
+            background-color: #1f2937 !important;
+            background: #1f2937 !important;
+            color: #ffffff !important;
+            border: 1px solid #2d3748 !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone div[style*="background"] *,
+        [data-bs-theme="dark"] #results-zone .card .p-3 * {
+            color: #ffffff !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone .badge.bg-secondary,
+        [data-bs-theme="dark"] #results-zone .rounded[style*="background-color: rgb(108, 117, 125)"] {
+            background-color: #374151 !important;
+            color: #ffffff !important;
+            border: 1px solid #4b5563 !important;
+        }
+
+        [data-bs-theme="dark"] .input-group-text {
+            background-color: #1f2937 !important;
+            color: #9ca3af !important;
+            border-color: #1f2937 !important;
+        }
+
+        [data-bs-theme="dark"] .form-control {
+            background-color: #1f2937;
+            border-color: #1f2937;
+            color: #f8fafc;
+        }
+
+        [data-bs-theme="dark"] .form-control:focus {
+            background-color: #111827;
+            border-color: #3b82f6;
+            color: #f8fafc;
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+        }
+
+        #advancedParams .card-body {
+            background-color: rgba(0, 0, 0, 0.02) !important;
+            border: 1px solid rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        [data-bs-theme="dark"] #advancedParams .card-body {
+            background-color: rgba(255, 255, 255, 0.02) !important;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+        }
+        
+        #results-zone img[alt="Absorption Spectrum"] {
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+
+        [data-bs-theme="dark"] #results-zone img[alt="Absorption Spectrum"] {
+            filter: invert(0.92) hue-rotate(180deg) brightness(1.1) contrast(1.1) !important;
+            background-color: #111827 !important; 
+        }
+
+        #results-zone img:not([alt="Absorption Spectrum"]) {
+            filter: none !important;
+        }
+
+        [data-bs-theme="light"] #results-zone img[alt="Absorption Spectrum"] {
+            filter: none !important;
+            background-color: #ffffff !important;
+        }
+
+        #secret-trigger-title {
+            user-select: none;
+            cursor: default;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container mt-4 mb-5">
+
+        <div class="d-flex justify-content-end gap-2 mb-3 no-print">
+            <button id="theme-toggler" class="btn btn-outline-secondary shadow-sm">
+                <i class="fa-solid fa-moon"></i> Dark Mode
+            </button>
+
+            <button onclick="window.print();" class="btn btn-primary shadow-sm px-3">
+                <i class="fa-solid fa-print"></i> Export / Print
+            </button>
+
+            <form action="/shutdown" method="POST" onsubmit="return confirm('Do you really want to turn me off ?');">
+                <button type="submit" class="btn btn-danger shadow-sm">
+                    <i class="fa-solid fa-power-off"></i> Exit
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center mb-4">
+            <h1 class="display-5 fw-bold text-primary">Molecular Search Engine</h1>
+            <p class="text-muted">
+                Multi-database Molecular Analyzer <br class="d-md-none">
+                (PubChem, CDMS, JPL, HITRAN, Thermo Chemical, NIST, mVOC, Sander)
+            </p>
+        </div>
+
+        <div class="card p-4 shadow-sm mb-4 border-0 no-print">
+            <form id="molecule-form">
+                <div class="input-group mb-3 shadow-sm rounded">
+                    <span class="input-group-text border-end-0 text-muted bg-transparent">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </span>
+                    
+                    <input type="text" name="molecule_name" class="form-control form-control-lg"
+                        placeholder="Enter molecule name, formula or PubChem CID"
+                        value="{{ params.molecule_name if params else '' }}" required>
+
+                    <button class="btn btn-primary btn-lg px-4" type="submit">
+                        Search
+                    </button>
+                </div>
+
+                <div class="text-start">
+                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#advancedParams" aria-expanded="false" aria-controls="advancedParams">
+                        <i class="fa-solid fa-sliders"></i> Advanced settings
+                    </button>
+                </div>
+
+                <div class="collapse mt-3" id="advancedParams">
+                    <div class="card card-body border-0 shadow-sm">
+                        <h5 class="h6 text-secondary mb-3" id="secret-trigger-title">
+                            <i class="fa-solid fa-gear"></i> Physical and Spectral Parameters
+                        </h5>
+
+                        <div class="row g-3">
+                            <div class="col-md-4" id="col-temperature">
+                                <label class="form-label small text-muted">Temperature (K)</label>
+                                <input type="number" step="0.01" name="temperature" class="form-control form-control-sm"
+                                    value="{{ params.temperature if params and params.temperature is not none else 295.15 }}">
+                            </div>
+
+                            <div class="col-md-4 radis-secret-field d-none" id="col-pressure">
+                                <label class="form-label small text-muted">Pressure (bar)</label>
+                                <input type="number" step="0.000001" name="pressure" class="form-control form-control-sm"
+                                    value="{{ params.pressure if params and params.pressure is not none else 1.0 }}">
+                            </div>
+
+                            <div class="col-md-4" id="col-isotope">
+                                <label class="form-label small text-muted">Isotope ID</label>
+                                <input type="number" name="isotope" class="form-control form-control-sm"
+                                    value="{{ params.isotope if params and params.isotope is not none else 1 }}">
+                            </div>
+                            
+                            <div class="col-12 mb-2 radis-secret-field d-none" id="col-switch">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input"
+                                            type="checkbox"
+                                            id="plot_spectre"
+                                            name="plot_spectre">
+
+                                    <label class="form-check-label fw-semibold" for="plot_spectre">
+                                        High-fidelity Continuum Spectrum (RADIS Voigt Profile)
+                                    </label>
+                                </div>
+
+                                <small class="text-muted">
+                                    Leave checked for full line broadening simulation (slower). Uncheck to instantly fetch discrete resonance lines (Astroquery).
+                                </small>
+                            </div>
+
+                            <div id="spectral-params" class="row g-3">
+
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Min Frequency (GHz)</label>
+                                    <input type="number"
+                                        step="0.1"
+                                        name="fmin"
+                                        class="form-control form-control-sm"
+                                        value="{{ params.fmin if params and params.fmin is not none else 30.0 }}">
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label small text-muted">Max Frequency (GHz)</label>
+                                    <input type="number"
+                                        step="0.1"
+                                        name="fmax"
+                                        class="form-control form-control-sm"
+                                        value="{{ params.fmax if params and params.fmax is not none else 800.0 }}">
+                                </div>
+
+                                <div class="col-md-4 radis-secret-field d-none" id="col-resolution">
+                                    <label class="form-label small text-muted">Resolution (GHz)</label>
+                                    <input type="number"
+                                        step="0.001"
+                                        name="resolution"
+                                        class="form-control form-control-sm"
+                                        value="{{ params.resolution if params and params.resolution is not none else 0.1 }}">
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div id="progress-container" class="card p-4 shadow-sm mb-4 border-0 d-none no-print">
+            <div id="loading-status-group">
+                <h5 class="text-secondary mb-2">Multi-database analysis in progress...</h5>
+                <div class="progress mb-3" style="height: 25px;">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                        role="progressbar" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <div id="logs-wrapper">
+                <div id="progress-logs" class="bg-dark text-light p-3 rounded font-monospace small"
+                    style="max-height: 180px; overflow-y: auto;"></div>
+            </div>
+        </div>
+
+        <div id="results-zone"></div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Store the SSE stream globally to allow clean cancellation on new searches
+        let activeEventSource = null;
+
+        document.getElementById('secret-trigger-title').addEventListener('click', function (e) {
+            if (e.detail === 3) {
+                const fields = document.querySelectorAll('.radis-secret-field');
+                fields.forEach(field => {
+                    field.classList.toggle('d-none');
+                });
+                console.log("[System] Advanced RADIS simulation settings toggled.");
+            }
+        });
+
+        document.getElementById("molecule-form").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            // 1. CRITICAL: If an event stream is already running, cut it off instantly to prevent UI conflicts
+            if (activeEventSource !== null) {
+                activeEventSource.close();
+                console.log("[Client] Previous network stream closed cleanly.");
+            }
+
+            const progressContainer = document.getElementById("progress-container");
+            const loadingStatusGroup = document.getElementById("loading-status-group");
+            const logsWrapper = document.getElementById("logs-wrapper");
+            const progressBar = document.getElementById("progress-bar");
+            const resultsZone = document.getElementById("results-zone");
+
+            const savedParams = {
+                molecule_name: this.querySelector('input[name="molecule_name"]').value,
+                temperature: this.querySelector('input[name="temperature"]').value,
+                pressure: this.querySelector('input[name="pressure"]').value,
+                isotope: this.querySelector('input[name="isotope"]').value,
+                fmin: this.querySelector('input[name="fmin"]').value,
+                fmax: this.querySelector('input[name="fmax"]').value,
+                resolution: this.querySelector('input[name="resolution"]').value
+            };
+
+            progressContainer.classList.remove("d-none");
+            loadingStatusGroup.style.display = "block";
+            logsWrapper.innerHTML = `<div id="progress-logs" class="bg-dark text-light p-3 rounded font-monospace small" style="max-height: 180px; overflow-y: auto;"></div>`;
+            
+            const activeLogsZone = document.getElementById("progress-logs");
+            activeLogsZone.innerHTML = "<span class='text-muted'>> Initializing...</span><br>";
+
+            progressBar.classList.remove("bg-danger");
+            progressBar.classList.add("bg-success", "progress-bar-striped", "progress-bar-animated");
+            progressBar.style.width = "0%";
+            progressBar.innerText = "0%";
+            resultsZone.innerHTML = "";
+
+            const formData = new FormData(this);
+            const searchParams = new URLSearchParams(formData).toString();
+            
+            // 2. Assign the new connection instance to the global variable
+            activeEventSource = new EventSource("/progress?" + searchParams);
+
+            activeEventSource.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                const currentLogsZone = document.getElementById("progress-logs");
+
+                if (data.percent !== undefined) {
+                    progressBar.style.width = data.percent + "%";
+                    progressBar.innerText = data.percent + "%";
+                }
+
+                if (data.log && currentLogsZone) {
+                    if (data.status === "error") {
+                        let cleanLog = data.log.replace(/^\[ERROR\]\s*/i, "");
+                        currentLogsZone.innerHTML += `<span class="text-danger fw-bold">[ERROR]</span> ${cleanLog}<br>`;
+                        progressBar.classList.remove("bg-success", "bg-primary", "progress-bar-animated");
+                        progressBar.classList.add("bg-danger");
+                        progressBar.style.width = "100%";
+                        
+                        activeEventSource.close();
+                        activeEventSource = null;
+                    } else if (data.status === "warning") {
+                        let cleanLog = data.log.replace(/^\[WARN\]\s*/i, "");
+                        currentLogsZone.innerHTML += `<span class="text-warning fw-bold">[WARN]</span> ${cleanLog}<br>`;
+                    } else {
+                        let cleanLog = data.log.replace(/^\[OK\]\s*/i, "");
+                        if (cleanLog.toLowerCase().includes("processing...") || cleanLog.toLowerCase().includes("creating")) {
+                            currentLogsZone.innerHTML += `<span class="text-info fw-bold">[WAIT]</span> ${cleanLog}<br>`;
+                        } else {
+                            currentLogsZone.innerHTML += `<span class="text-success fw-bold">[OK]</span> ${cleanLog}<br>`;
+                        }
+                    }
+                    currentLogsZone.scrollTop = currentLogsZone.scrollHeight;
+                }
+
+                if (data.percent === 100 && data.html) {
+                    resultsZone.innerHTML = data.html;
+
+                    const form = document.getElementById("molecule-form");
+                    form.querySelector('input[name="molecule_name"]').value = savedParams.molecule_name;
+                    form.querySelector('input[name="temperature"]').value = savedParams.temperature;
+                    form.querySelector('input[name="pressure"]').value = savedParams.pressure;
+                    form.querySelector('input[name="isotope"]').value = savedParams.isotope;
+                    form.querySelector('input[name="fmin"]').value = savedParams.fmin;
+                    form.querySelector('input[name="fmax"]').value = savedParams.fmax;
+                    form.querySelector('input[name="resolution"]').value = savedParams.resolution;
+
+                    loadingStatusGroup.style.display = "none";
+
+                    const finalLogsHTML = currentLogsZone.innerHTML; 
+                    logsWrapper.innerHTML = `
+                        <details class="mt-2">
+                            <summary class="text-primary font-monospace">
+                                <span> Click to toggle multi-database search logs</span>
+                                <i class="fa-solid fa-chevron-down text-muted small"></i>
+                            </summary>
+                            <div class="bg-dark text-light p-3 rounded font-monospace small mt-2" style="max-height: 200px; overflow-y: auto;">
+                                ${finalLogsHTML}
+                                <span class="text-info fw-bold">> [INFO]</span> Pipeline execution completed successfully.
+                            </div>
+                        </details>
+                    `;
+
+                    activeEventSource.close();
+                    activeEventSource = null;
+
+                    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+                    [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+                }
+            };
+
+            // 3. Fallback handle in case network issues drop the connection unexpectedly
+            activeEventSource.onerror = function() {
+                if (activeEventSource !== null) {
+                    activeEventSource.close();
+                    activeEventSource = null;
+                }
+            };
+        });
+
+        const toggler = document.getElementById("theme-toggler");
+        const htmlElement = document.documentElement;
+
+        function updateTogglerUI(theme) {
+            if (theme === "dark") {
+                toggler.innerHTML = '<i class="fa-solid fa-sun"></i> Light Mode';
+                toggler.classList.remove("btn-outline-secondary");
+                toggler.classList.add("btn-outline-light");
+            } else {
+                toggler.innerHTML = '<i class="fa-solid fa-moon"></i> Dark Mode';
+                toggler.classList.remove("btn-outline-light");
+                toggler.classList.add("btn-outline-secondary");
+            }
+        }
+
+        const savedTheme = localStorage.getItem("theme") || "light";
+        htmlElement.setAttribute("data-bs-theme", savedTheme);
+        updateTogglerUI(savedTheme);
+
+        toggler.addEventListener("click", () => {
+            const currentTheme = htmlElement.getAttribute("data-bs-theme");
+            const newTheme = currentTheme === "dark" ? "light" : "dark";
+            htmlElement.setAttribute("data-bs-theme", newTheme);
+            localStorage.setItem("theme", newTheme);
+            updateTogglerUI(newTheme);
+        });
+
+        function downloadSpectrumCSV() {
+            const form = document.getElementById("molecule-form");
+            const moleculeName = form.querySelector('input[name="molecule_name"]').value;
+            const temperature = form.querySelector('input[name="temperature"]').value;
+            const pressure = form.querySelector('input[name="pressure"]').value;
+            const isotope = form.querySelector('input[name="isotope"]').value;
+            const fmin = form.querySelector('input[name="fmin"]').value;
+            const fmax = form.querySelector('input[name="fmax"]').value;
+            const resolution = form.querySelector('input[name="resolution"]').value;
+
+            if (!moleculeName) {
+                alert("Please search for a molecule first.");
+                return;
+            }
+
+            const params = new URLSearchParams({
+                molecule_name: moleculeName,
+                temperature: temperature,
+                pressure: pressure,
+                isotope: isotope,
+                fmin: fmin,
+                fmax: fmax,
+                resolution: resolution
+            });
+
+            window.location.href = `/download-spectrum-csv?${params.toString()}`;
+        }
+    </script>
+
+</body>
+
+</html>
