@@ -24,7 +24,7 @@ The goal is to provide a centralized and user-friendly platform for exploring mo
 
 ### Requirements
 
-- **Python 3.12**
+- **Python 3.12** : it only works with this version
 - [uv](https://docs.astral.sh/uv/): it downloads and uses Python 3.12 automatically,
   so you do not need to install Python yourself
 
