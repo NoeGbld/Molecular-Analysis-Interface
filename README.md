@@ -16,8 +16,45 @@ The goal is to provide a centralized and user-friendly platform for exploring mo
 - Python-based data processing
 - HTML-based interface
 
-## Installation and Documentation
+## Installation
 
-A complete installation and usage guide is available in the `doc_en` file.
+> **Important:** the **Quickstart** section of `doc_en` and `doc_fr` is outdated
+> (`installer.py` and `requirements.txt` no longer exist).
+> Use the procedure below instead. The rest of the documentation is still valid.
 
-Refer to the **Quickstart** section for step-by-step instructions on how to install, configure, and run the project.
+### Requirements
+
+- **Python 3.12**
+- [uv](https://docs.astral.sh/uv/): it downloads and uses Python 3.12 automatically,
+  so you do not need to install Python yourself
+
+### Steps
+
+1. Install uv:
+   ```
+   pip install uv
+   ```
+
+2. In the project folder, install the dependencies:
+   ```
+   uv sync
+   ```
+
+3. Double-click `Windows Interface Launcher.exe`.
+
+The web interface opens in your browser at `http://127.0.0.1:5000/`.
+
+### First launch
+
+The first launch downloads Chromium (about 330 MB), used for web scraping.
+Allow a few minutes: the browser opens automatically once the server is ready.
+
+### Running without the exe (any OS)
+
+```
+uv run --no-sync src/launcher.py
+```
+
+### Closing the application
+
+Use the quit button of the web interface, or press `Ctrl+C` in the console window.

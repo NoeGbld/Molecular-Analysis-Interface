@@ -1,0 +1,27 @@
+[project]
+name = "molecular-analysis-interface"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "flask",
+    "matplotlib",
+    "numpy",
+    "thermo",
+    "radis==0.17",
+    "scipy",
+    "beautifulsoup4",
+    "requests",
+    "pubchempy",
+    "pint",
+    "playwright",
+    "astroquery",
+    "nest_asyncio",
+]
+
+[tool.uv]
+package = false
+override-dependencies = [
+    "vaex-core; sys_platform == 'never'",
+    "vaex-hdf5; sys_platform == 'never'",
+    "vaex-viz; sys_platform == 'never'",
+]

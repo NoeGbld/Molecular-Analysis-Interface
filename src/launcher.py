@@ -6,10 +6,16 @@ import subprocess
 import webbrowser
 import threading
 import time
+import socket
 
 def open_browser():
-    # Wait 2 seconds for the Flask server (app.py) to initialize completely
-    time.sleep(2.0)
+    # Wait until Flask answers (first launch downloads Chromium, this can take minutes)
+    for _ in range(1500):  # ~5 min max
+        try:
+            with socket.create_connection(("127.0.0.1", 5000), timeout=0.2):
+                break
+        except OSError:
+            time.sleep(0.2)
     print("[System] Automatically opening the web browser...")
     webbrowser.open_new("http://127.0.0.1:5000/")
 
@@ -29,7 +35,11 @@ if __name__ == "__main__":
         
     # 3. Use Popen instead of run to monitor the background process
     try:
-        process = subprocess.Popen([sys.executable, app_path])
+        process = subprocess.Popen([sys.executable, app_path],
+                           stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                           text=True, bufsize=1)
+        threading.Thread(target=lambda: [print(l, end="") for l in process.stdout],
+                 daemon=True).start()
         
         # Active monitoring loop
         while True:

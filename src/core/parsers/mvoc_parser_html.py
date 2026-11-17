@@ -7,41 +7,44 @@ from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 from core.tools import preprocess, convert_value
 
-# Fetch mVOC result page HTML using Playwright
+# Fetch mVOC result page HTML using Playwright with timeout handling
 def _fetch_mvoc_html(pubchem_id):
     with sync_playwright() as p:
         # Launch headless Chromium
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
-        # Open mVOC search page
-        page.goto(
-            "https://bioinformatics.charite.de/mvoc/index.php?site=mvocsearch"
-        )
-        # Submit PubChem CID
-        page.fill('input[name="compound_id"]', str(pubchem_id))
-        page.click('input[name="B3"]')
-        # Wait for results page
-        page.wait_for_load_state("load")
-        page.wait_for_timeout(2000)
-        # Get rendered HTML
-        html = page.content()
-        browser.close()
-    return html
+        
+        # Direct search URL using GET parameters
+        search_url = f"https://bioinformatics.charite.de/mvoc/index.php?site=mvocsearch&compound_id={pubchem_id}&B3=Submit"
+        
+        try:
+            # Set a 10-second timeout to prevent application hanging if the server is down
+            page.goto(search_url, timeout=10000, wait_until="domcontentloaded")
+            html = page.content()
+        except Exception as e:
+            print(f"[mVOC Warning] Connection timeout or server unreachable: {e}")
+            html = ""
+        finally:
+            browser.close()
+            
+        return html
 
-# Load mVOC properties into molecule object
+# Load mVOC properties into molecule object with graceful degradation
 def fill_from_mvoc(mol):
 
     if mol.id_pubchem is None:
-        print("[mVOC] CID PubChem unavailable")
-        return "[WARN] [mVOC]: CID PubChem unavailable"
+        print("[mVOC] PubChem CID unavailable")
+        return "[WARN] [mVOC]: PubChem CID unavailable"
 
-    # Retrieve HTML from mVOC
+    # Retrieve HTML from mVOC safely
     try:
         html = _fetch_mvoc_html(mol.id_pubchem)
-
+        if not html:
+            print("[mVOC] mVOC database is currently unreachable. Skipping...")
+            return "[WARN] [mVOC]: Remote database unreachable"
     except Exception as e:
-        raise RuntimeError(
-            f"[mVOC] Playwright navigation error: {e}")
+        print(f"[mVOC Error] {e}")
+        return f"[WARN] [mVOC]: Connection failed: {e}"
 
     # Parse HTML
     soup = BeautifulSoup(html, "html.parser")
@@ -53,11 +56,9 @@ def fill_from_mvoc(mol):
     rows = soup.find_all("tr")
 
     for row in rows:
-
         cells = row.find_all(["td", "th"])
 
         if len(cells) >= 2:
-
             key = cells[0].text.strip()
             val = cells[1].text.strip()
 
@@ -80,18 +81,14 @@ def fill_from_mvoc(mol):
     henry_idx = html.lower().find("henry")
 
     if henry_idx > 0:
-
         henry_text = html[henry_idx : henry_idx + 1000]
 
-        match = re.search(
-            r"([\d.]+[xX]10[-\d]+)\s*atm", henry_text)
+        match = re.search(r"([\d.]+[xX]10[-\d]+)\s*atm", henry_text)
 
         if match:
             result["henry_raw"] = match.group(1)
-
         else:
-            match_simple = re.search(
-                r"estimated\s*as\s*([\d.]+)\s*atm", henry_text, re.IGNORECASE)
+            match_simple = re.search(r"estimated\s*as\s*([\d.]+)\s*atm", henry_text, re.IGNORECASE)
             if match_simple:
                 result["henry_raw"] = match_simple.group(1)
 
@@ -100,16 +97,15 @@ def fill_from_mvoc(mol):
         text = table.get_text()
         if "boiling" in text.lower():
             match = re.search(r"(-?\d+(?:\.\d+)?)\s*\u00b0C", text)
-
             if match:
                 result["boiling_point_C"] = float(match.group(1))
                 break
     
+    # Extract melting point
     for table in soup.find_all("table"):
         text = table.get_text()
         if "melting" in text.lower():
             match = re.search(r"(-?\d+(?:\.\d+)?)\s*\u00b0C", text)
-
             if match:
                 result["melting_point_C"] = float(match.group(1))
                 break
@@ -118,7 +114,6 @@ def fill_from_mvoc(mol):
     vp_found = False
 
     for table in soup.find_all("table"):
-
         headers = [th.text.strip() for th in table.find_all("th")]
 
         if "Pressure" in headers and "Reference" in headers:
@@ -128,7 +123,8 @@ def fill_from_mvoc(mol):
                 if not cols or not cols[0]:
                     continue
                 match = re.search(
-                    r"([\d.]+)\s*(mm\s*Hg|Pa|atm|kPa)\s*at\s*([\d.]+)\s*(deg\s*C|°C|K)", cols[0], re.IGNORECASE,)
+                    r"([\d.]+)\s*(mm\s*Hg|Pa|atm|kPa)\s*at\s*([\d.]+)\s*(deg\s*C|°C|K)", cols[0], re.IGNORECASE
+                )
 
                 if match:
                     result["vapor_pressure_value"] = float(match.group(1))
@@ -169,7 +165,6 @@ def fill_from_mvoc(mol):
             vp_found = True
 
     if not result:
-
         print("[mVOC]: Molecule not found in database")
         return "[WARN] [mVOC]: No data available for this molecule"
 
@@ -177,38 +172,36 @@ def fill_from_mvoc(mol):
     mol.molar_mass.mvoc = (
         float(result["Molweight"])
         if "Molweight" in result
-        else None)
+        else None
+    )
 
     mol.logp.mvoc = (
         float(result["logP"])
         if "logP" in result
-        else None)
+        else None
+    )
 
     mol.boilingtemp.mvoc = (
         float(result["boiling_point_C"])
         if "boiling_point_C" in result
-        else None)
+        else None
+    )
 
     mol.meltingtemp.mvoc = (
         float(result["melting_point_C"])
         if "melting_point_C" in result
-        else None)
+        else None
+    )
 
     if result.get("henry_raw"):
-
         raw_val = preprocess(result["henry_raw"])
         hvpc = float(raw_val)
-
         mol.henryconstant.mvoc = (1.83089 / (101325 * hvpc))
-
         mol.henryconstant.mvoc_temperature = (298.15 if mol.henryconstant.mvoc is not None else None)
 
     if "vapor_pressure_value" in result:
-
-        mol.vaporpressure.mvoc = convert_value(result["vapor_pressure_value"],"mmHg","Pa",)
-
-        mol.vaporpressure.mvoc_temperature = (result["vapor_pressure_temp_K"])
+        mol.vaporpressure.mvoc = convert_value(result["vapor_pressure_value"], "mmHg", "Pa")
+        mol.vaporpressure.mvoc_temperature = result["vapor_pressure_temp_K"]
 
     print("[mVOC]: OK")
-
     return "[OK] [mVOC] data loaded"
