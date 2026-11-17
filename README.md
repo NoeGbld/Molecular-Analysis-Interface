@@ -1,4 +1,4 @@
-# Molecular-Analysis-Interface
+# Molecular Analysis Interface
 
 A Multi-database Molecular Analyzer consolidating molecular information from various databases into a single, unified platform.
 
