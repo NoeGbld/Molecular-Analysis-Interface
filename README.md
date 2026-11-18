@@ -39,6 +39,11 @@ The goal is to provide a centralized and user-friendly platform for exploring mo
    ```
    uv sync
    ```
+   On Windows ARM, use this instead,
+   because some dependencies have no ARM64 build:
+   ```
+   uv sync --python cpython-3.12-windows-x86_64
+   ```
 
 3. Double-click `Windows Interface Launcher.exe`.
 
